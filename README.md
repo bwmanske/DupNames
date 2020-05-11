@@ -7,15 +7,16 @@ sample command line:<p>
 `DupNames -ic:\test\sample.ini,
 
 sample DupNames.ini:
-`[InitState]
+`[InitState]<br>
 TokenMatchCount=0`
 
 `[PathList]`
+
 `ProtectedPath1=v:\Movies\Animation`
 
 `NormalPath1=w:\video\Finished Encoding`
 
-sample INI notes:
+### sample INI notes:
 - InitState section is unused
 - ProtectedPath and NormalPath Followed by a number has no upper bound but the numbers nust be consecutive.
 - When the option to delete is added, ProtectedPathxx(s) will not allow deletion
