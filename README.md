@@ -4,7 +4,7 @@ fuzzy matching of directory names
 You need a DupNames.ini file or specify in INI file on the command line.
 
 sample command line:<p>
-`DupNames -ic:\test\sample.ini,
+`DupNames -ic:\test\sample.ini'
 
 sample DupNames.ini:
 ```
