@@ -7,11 +7,12 @@ sample command line:<p>
 `DupNames -ic:\test\sample.ini,
 
 sample DupNames.ini:
-`[InitState]`
-`TokenMatchCount=0`
+`[InitState]
+TokenMatchCount=0`
 
 `[PathList]`
 `ProtectedPath1=v:\Movies\Animation`
+
 `NormalPath1=w:\video\Finished Encoding`
 
 sample INI notes:
