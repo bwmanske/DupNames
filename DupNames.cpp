@@ -12,6 +12,7 @@
 #include "DupCompare.h"
 
 #pragma warning(disable : 26451)
+#pragma warning(disable : 4267)
 
 bool             exitRequest           = false;
 bool             readPathsDone         = false;
