@@ -14,41 +14,40 @@
 #pragma warning(disable : 26451)
 #pragma warning(disable : 4267)
 
-bool             exitRequest           = false;
-bool             readPathsDone         = false;
-bool             InitSuccess           = true;
-bool             INI_NormalComplete    = false;
-bool             INI_ProtectedComplete = false;
-bool             verboseOutputFlag     = false;
-
-// debug
-bool   afterBreak = false;
+bool   exitRequest            = false;
+bool   readPathsDone          = false;
+bool   InitSuccess            = true;
+bool   INI_NormalComplete     = false;
+bool   INI_ProtectedComplete  = false;
+bool   verboseOutputFlag      = false;
 
 int    INI_PathProtectedCount = 0;
-int    INI_PathNormalCount = 0;
-int    INI_TokenMatchCount = 0;
-int    workingPathIndex = 0;
-int    lastFileTotal = 0;
-int    lastPathTotal = 0;
-
-int       rotationIndex = 1;
-const int matchRotation[] = { 0, 4, 2, 5, 6, 7, 3, 1 };
-int       rotationBits;
+int    INI_PathNormalCount    = 0;
+int    INI_TokenMatchCount    = 0;
+int    workingPathIndex       = 0;
+int    lastFileTotal          = 0;
+int    lastPathTotal          = 0;
 
 // default Filename for the INI status file
-const string     default_INI_FileName = "DupNames.ini";
-const string     SectionName_InitState = "InitState";
-const string     SectionName_PathList = "PathList";
+const string     default_INI_FileName    = "DupNames.ini";
+const string     SectionName_InitState   = "InitState";
+const string     SectionName_PathList    = "PathList";
 
-string           Key_ProtectedPath = "ProtectedPath";
-string           Key_NormalPath = "NormalPath";
-string           Key_TokenMatchCount = "TokenMatchCount";
+string           Key_ProtectedPath       = "ProtectedPath";
+string           Key_NormalPath          = "NormalPath";
+string           Key_TokenNMatchValue    = "TokenNMatchValue";
+string           Key_TokenPMatchValue    = "TokenPMatchValue";
+string           Key_TrimmedMatchEnable  = "TrimmedMatchEnable";
+string           Key_AllTokenMatchEnable = "AllTokenMatchEnable";
+string           Key_CountedMatchEnable  = "CountedMatchEnable";
+string           Key_MovieMatchEnable    = "MovieMatchEnable";
+string           Key_EpisodeMatchEnable  = "EpisodeMatchEnable";
 string           workingPath;
-string           tokenMatchCountStr;
+string           tokenMatchStr;
 
 string           INI_FileName = "";
 
-int main(int argc, char** argv)
+int main (int argc, char** argv)
 {
 	cout << "Command Line and " << argc - 1 << " arguments:" << endl;
 	cout << "   " << argv[0] << endl;
@@ -92,7 +91,102 @@ int main(int argc, char** argv)
 		std::cout << endl << INI_FileName << " - File exists" << endl << endl;      // time to read the file
 
 		if (CIniFile::DoesSectionExist(SectionName_InitState, INI_FileName)) {
-			tokenMatchCountStr = CIniFile::GetValue(Key_TokenMatchCount, SectionName_InitState, INI_FileName);
+			tokenMatchStr = CIniFile::GetValue(Key_TokenNMatchValue, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				try {
+					tokenNMatchValue = stoi(tokenMatchStr);
+				}
+				catch (invalid_argument const &e) {
+					cout << "Invalid Argument - tokenNMatchValue - " << e.what() << endl;
+					tokenNMatchValue = DEFAULT_N_VAL;
+				}
+				catch (out_of_range const &e) {
+					cout << "Out Of Range - tokenNMatchValue - " << e.what() << endl;
+					tokenNMatchValue = DEFAULT_N_VAL;
+				}
+				if ((tokenNMatchValue < MIN_N_VAL) || (tokenNMatchValue > MAX_N_VAL)) {
+					cout << "TokenNMatchValue - Out of Range - setting it to default\n";
+					tokenNMatchValue = DEFAULT_N_VAL;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_TokenPMatchValue, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				try {
+					tokenPMatchValue = stoi(tokenMatchStr);
+				}
+				catch (invalid_argument const &e) {
+					cout << "Invalid Argument - tokenPMatchValue - " << e.what() << endl;
+					tokenPMatchValue = DEFAULT_P_VAL;
+				}
+				catch (out_of_range const &e) {
+					cout << "Out Of Range - tokenPMatchValue - " << e.what() << endl;
+					tokenPMatchValue = DEFAULT_P_VAL;
+				}
+				if ((tokenPMatchValue < MIN_P_VAL) || (tokenPMatchValue > MAX_P_VAL)) {
+					cout << "TokenPMatchValue - Out of Range - setting it to default\n";
+					tokenPMatchValue = DEFAULT_P_VAL;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_TrimmedMatchEnable, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				std::for_each(tokenMatchStr.begin(), tokenMatchStr.end(), [](char& c) {
+					c = ::tolower(c);                            // make the str lower case
+				});
+				if (tokenMatchStr == "enabled") {
+					trimmedFileNameMatchEnable = true;
+				}
+				else if (tokenMatchStr == "disabled") {
+					trimmedFileNameMatchEnable = false;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_AllTokenMatchEnable, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				std::for_each(tokenMatchStr.begin(), tokenMatchStr.end(), [](char& c) {
+					c = ::tolower(c);                            // make the str lower case
+				});
+				if (tokenMatchStr == "enabled") {
+					allTokenMatchEnable = true;
+				}
+				else if (tokenMatchStr == "disabled") {
+					allTokenMatchEnable = false;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_CountedMatchEnable, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				std::for_each(tokenMatchStr.begin(), tokenMatchStr.end(), [](char& c) {
+					c = ::tolower(c);                            // make the str lower case
+				});
+				if (tokenMatchStr == "enabled") {
+					countedMatchEnable = true;
+				}
+				else if (tokenMatchStr == "disabled") {
+					countedMatchEnable = false;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_MovieMatchEnable, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				std::for_each(tokenMatchStr.begin(), tokenMatchStr.end(), [](char& c) {
+					c = ::tolower(c);                            // make the str lower case
+				});
+				if (tokenMatchStr == "enabled") {
+					movieMatchEnable = true;
+				}
+				else if (tokenMatchStr == "disabled") {
+					movieMatchEnable = false;
+				}
+			}
+			tokenMatchStr = CIniFile::GetValue(Key_EpisodeMatchEnable, SectionName_InitState, INI_FileName);
+			if (tokenMatchStr != "") {
+				std::for_each(tokenMatchStr.begin(), tokenMatchStr.end(), [](char& c) {
+					c = ::tolower(c);                            // make the str lower case
+				});
+				if (tokenMatchStr == "enabled") {
+					episodeMatchEnable = true;
+				}
+				else if (tokenMatchStr == "disabled") {
+					episodeMatchEnable = false;
+				}
+			}
 		}
 		else {
 			cout << SectionName_InitState << " - Section does NOT exist" << endl;
@@ -275,18 +369,35 @@ int main(int argc, char** argv)
 				break;
 			case 'm':
 			case 'M':
-				rotationBits = matchRotation[rotationIndex];
+				cout << "1-Movies Match  2=Episodes Match  3=Trimmed Name Match  4=All Token Match  5=Counted Match  >" ;
+				newChar = _getch();
+				cout << endl;
+				switch (newChar) {
+					case '1':
+						movieMatchEnable = !movieMatchEnable;
+						break;
+					case '2':
+						episodeMatchEnable = !episodeMatchEnable;
+						break;
+					case '3':
+						trimmedFileNameMatchEnable = !trimmedFileNameMatchEnable;
+						break;
+					case '4':
+						allTokenMatchEnable = !allTokenMatchEnable;
+						break;
+					case '5':
+						countedMatchEnable = !countedMatchEnable;
+						break;
+					default:
+						break;
+				}
 
-				allTokenMatchEnable        = (rotationBits & 1) != 0;
-				countedMatchEnable         = (rotationBits & 2) != 0;
-				trimmedFileNameMatchEnable = (rotationBits & 4) != 0;
-				cout << "All Word, Counted, Trimmed = "
-					<< (allTokenMatchEnable ? "T" : "F") << ", "
-					<< (countedMatchEnable ? "T" : "F") << ", "
-					<< (trimmedFileNameMatchEnable ? "T" : "F") << "    " << rotationBits << " " << rotationIndex << endl;
+				cout << "Movie Match        = " << (movieMatchEnable           ? "Enabled" : "Disabled") << endl;
+				cout << "Episode Match      = " << (episodeMatchEnable         ? "Enabled" : "Disabled") << endl;
+				cout << "Trimmed Name Match = " << (trimmedFileNameMatchEnable ? "Enabled" : "Disabled") << endl;
+				cout << "All Token Match    = " << (allTokenMatchEnable        ? "Enabled" : "Disabled") << endl;
+				cout << "Counted Match      = " << (countedMatchEnable         ? "Enabled" : "Disabled") << endl;
 
-				rotationIndex = ++rotationIndex & 7;
-				if (rotationIndex == 0) rotationIndex++;
 				break;
 			case 'h':
 			case 'H':
@@ -298,6 +409,11 @@ int main(int argc, char** argv)
 					<< " f    - Files read listed by original name" << endl
 					<< " F    - Files read listed by trimmed string" << endl
 					<< " m, M - Match control" << endl
+					<< "        1=Movie Match Toggle" << endl
+					<< "        2=Episode Match Toggle" << endl
+					<< "        3=Trimmed Name Match Toggle" << endl
+					<< "        4=All Token Match Match Toggle" << endl
+					<< "        5=Counted Match Toggle" << endl
 					<< " p, P - Paths read list" << endl
 					<< " s, S - Status" << endl
 					<< " -, + - change (+) match value (" << MIN_P_VAL << " to " << MAX_P_VAL << ")" << endl
@@ -326,9 +442,11 @@ int main(int argc, char** argv)
 					<< "Normal Paths                   = " << INI_PathNormalCount << endl
 					<< "Paths Read                     = " << PathStorage.size() << endl
 					<< "Files Read                     = " << FileStorage.size() << endl
-					<< "All Word Match Enable          = " << (allTokenMatchEnable ? "True" : "False") << endl
-					<< "Counted Match Enable           = " << (countedMatchEnable ? "True" : "False") << endl
-					<< "Trimmed File Name Match Enable = " << (trimmedFileNameMatchEnable ? "True" : "False") << endl
+					<< "Movie Match                    = " << (movieMatchEnable           ? "Enabled" : "Disabled") << endl
+					<< "Episode Match                  = " << (episodeMatchEnable         ? "Enabled" : "Disabled") << endl
+					<< "Trimmed Name Match             = " << (trimmedFileNameMatchEnable ? "Enabled" : "Disabled") << endl
+					<< "All Token Match                = " << (allTokenMatchEnable        ? "Enabled" : "Disabled") << endl
+					<< "Counted Match                  = " << (countedMatchEnable         ? "Enabled" : "Disabled") << endl
 					<< "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
 				break;
 			case '+':

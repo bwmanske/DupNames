@@ -61,6 +61,8 @@ bool tokenPositiveFlag = false;
 bool allTokenMatchEnable = false;
 bool countedMatchEnable = false;
 bool trimmedFileNameMatchEnable = false;
+bool episodeMatchEnable = false;
+bool movieMatchEnable = false;
 
 int  tokenNMatchValue = 1;
 int  tokenPMatchValue = 0;
@@ -72,6 +74,8 @@ extern bool tokenPositiveFlag;
 extern bool allTokenMatchEnable;
 extern bool countedMatchEnable;
 extern bool trimmedFileNameMatchEnable;
+extern bool episodeMatchEnable;
+extern bool movieMatchEnable;
 
 extern int  tokenNMatchValue;
 extern int  tokenPMatchValue;
