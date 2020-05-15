@@ -81,8 +81,16 @@ int main (int argc, char** argv)
 			i++;
 		}
 	}
-	else {
-		INI_FileName = default_INI_FileName;
+	if (INI_FileName == "") {
+		if (CIniFile::DoesFileExist(default_INI_FileName)) {
+			INI_FileName = default_INI_FileName;
+		}
+		else {
+			fsPath tmpINI = argv[0];
+			cout << tmpINI.root_path().string() << endl << tmpINI.parent_path().string() << endl;
+			INI_FileName = tmpINI.parent_path().string() + "\\" + default_INI_FileName;
+			cout << INI_FileName << endl;
+		}
 	}
 
 	cout << "Press Q to quit and H for help" << endl;
