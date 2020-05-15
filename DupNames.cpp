@@ -377,6 +377,9 @@ int main (int argc, char** argv)
 				break;
 			case 'm':
 			case 'M':
+				while (_kbhit() != 0) {       // clear the keyboard queue
+					char newChar = _getch();
+				}
 				cout << "1-Movies Match  2=Episodes Match  3=Trimmed Name Match  4=All Token Match  5=Counted Match  >" ;
 				newChar = _getch();
 				cout << endl;
@@ -398,6 +401,9 @@ int main (int argc, char** argv)
 						break;
 					default:
 						break;
+				}
+				while (_kbhit() != 0) {       // clear the keyboard queue
+					char newChar = _getch();
 				}
 
 				cout << "Movie Match        = " << (movieMatchEnable           ? "Enabled" : "Disabled") << endl;
@@ -499,6 +505,9 @@ int main (int argc, char** argv)
 				break;
 			default:
 				break;
+			}
+			while (_kbhit() != 0) {       // clear the keyboard queue
+				char newChar = _getch();
 			}
 		}
 	}
