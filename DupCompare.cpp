@@ -161,11 +161,25 @@ void compareFileEntries() {
 					}
 					cout << endl;
 
-					cout << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
-					cout << "      - " << pathStr1 << endl;
-					cout << "    " << protStr2 << " " << (*it).fileName.string() << endl;
-					cout << "      - " << pathStr2 << endl;
-					cout << endl;
+					if (allowFileDelete) {
+
+					}
+					else {
+						cout << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
+						cout << "      - " << pathStr1 << endl;
+						cout << "    " << protStr2 << " " << (*it).fileName.string() << endl;
+						cout << "      - " << pathStr2 << endl;
+						cout << endl;
+					}
+					// if !skip this file AND allow file delete
+					//    file 1 delete
+					//       del (*local_it).filename
+					//       temp_it = *local_it
+					//       FileStorage.erase(*temp_it)
+					//    file 2 delete
+					//       del (*it).filename
+					//       temp_it = *it
+					//       FileStorage.erase(*temp_it)
 					fileNameMatchCount++;
 				}
 			}

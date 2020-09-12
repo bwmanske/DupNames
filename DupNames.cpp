@@ -646,7 +646,9 @@ void readDirBranch(const fsPath currentPath, size_t currentPathIndex, bool curre
 					cout << "Filename = " << filename << endl;
 				}
 
-				FileStorage.push_back(tempFile);
+				if (movieMatchEnable || episodeMatchEnable) {
+					FileStorage.push_back(tempFile);
+				}
 			}
 		}
 

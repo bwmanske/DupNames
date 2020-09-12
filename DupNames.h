@@ -11,9 +11,9 @@
 //#include <windows.h>
 
 
-#define MAX_TOKENS 6
-#define MIN_YEAR   1875
-#define MAX_YEAR   2020
+#define MAX_TOKENS      6
+#define MIN_YEAR     1875
+#define MAX_YEAR     2020
 #define DEFAULT_P_VAL   0
 #define MAX_P_VAL       9
 #define MIN_P_VAL       0
@@ -57,6 +57,7 @@ void compareFileEntries();
 void readDirBranch(const fsPath pathToShow, size_t currentPathIndex, bool currentProtFlag);
 void removeSpaces(string& str);
 
+bool allowFileDelete = false;
 bool tokenPositiveFlag = false;
 bool allTokenMatchEnable = false;
 bool countedMatchEnable = false;
@@ -70,6 +71,7 @@ int  tokenPMatchValue = 0;
 extern std::vector <struct fileInfo_t> FileStorage;
 extern std::vector <struct pathInfo_t> PathStorage;
 
+extern bool allowFileDelete;
 extern bool tokenPositiveFlag;
 extern bool allTokenMatchEnable;
 extern bool countedMatchEnable;
