@@ -1,7 +1,11 @@
 #define DUP_COMPARE_CPP
 
+//#include <stdio.h>
+#include <windows.h>
+
 #include "DupNames.h"
 #include "DupCompare.h"
+#include "ScrUtil.h"
 
 using namespace std;
 
@@ -28,6 +32,21 @@ void compareFileEntries() {
 			size_t p2_size = (*it).tokens.size();
 			for (local_it = it + 1; local_it != FileStorage.end(); ++local_it) {
 				size_t p1_size = (*local_it).tokens.size();
+
+				if (allowFileDelete) {
+					// skip comparison if one of the files if one has been deleted
+					if (((*local_it).fileDeleted == true) ||
+					    ((*it).fileDeleted       == true))
+						continue;
+				}
+
+				if (allowSkip2ProtFiles) {
+					// skip comparison if both files are protected
+					if ((fileProtectStr(getFilePath_it(local_it)) == "P") &&
+					    (fileProtectStr(getFilePath_it(it))       == "P")) {
+						continue;
+					}
+				}
 
 				if (trimmedFileNameMatchEnable) {
 					// trimmed file name match
@@ -162,7 +181,92 @@ void compareFileEntries() {
 					cout << endl;
 
 					if (allowFileDelete) {
+						ScrUtil::Attributes atr = ScrUtil::getCurrentAttributes();
 
+						ScrUtil::Color colour = ( protStr1 == "N" ) ? ScrUtil::Green : ScrUtil::Red;
+					    ScrUtil::setColors( colour, ScrUtil::Black );
+						cout << (colour == ScrUtil::Green) ? "(1) " : "    ";
+						cout << protStr1 << " " << (*local_it).fileName.string() << endl;
+						cout << "      - " << pathStr1 << endl;
+
+						colour = ( protStr2 == "N" ) ? ScrUtil::Green : ScrUtil::Red;
+					    ScrUtil::setColors( colour, ScrUtil::Black );
+						cout << (colour == ScrUtil::Green) ? "(2) " : "    ";
+						cout << protStr2 << " " << (*it).fileName.string() << endl;
+						cout << "      - " << pathStr2 << endl;
+
+					    ScrUtil::setColors( atr.ink, atr.paper );
+						cout << "Delete file (1) (2) ";
+						if (logFileCreate)
+							cout << "(space) to skip or (L) to log\n";
+						else
+							cout << "or (space) to skip\n";
+						
+						char newChar;
+						while (_kbhit() != 0) {             // clear the input buffer
+							newChar = _getch();
+						}
+						cout << endl;
+//						cout << "input buffer cleared" << endl;
+
+						bool waitForIt = true;
+						while (waitForIt) {
+							if (_kbhit() != 0) {
+								newChar = _getch();
+								switch (newChar) {
+								case '1':
+									cout << newChar;
+									if (protStr1 == "N") {
+								    	waitForIt = false;
+									}
+									break;
+								case '2':
+									cout << newChar;
+									if (protStr2 == "N") {
+										waitForIt = false;
+									}
+									break;
+								case ' ':
+									waitForIt = false;
+									break;
+								case 'l':
+								case 'L':
+									waitForIt = false;
+									break;
+								default:
+									cout << newChar;
+									Sleep(250);
+									break;
+								}
+							}
+							else {
+								Sleep(250);
+							}
+						}
+						if (newChar == '1') {
+							string completeFileName1 = pathStr1 + '\\' + (*local_it).fileName.string();
+#if 0								
+							if ( remove( completeFileName1.c_str() ) != 0 )
+								cout << "Error deleting - " << completeFileName1;
+							else
+								cout << completeFileName1 << " - successfully deleted";
+#else								
+							cout << "Deleting..." << completeFileName1 << endl;
+#endif									
+							(*local_it).fileDeleted = true;
+						}
+						if (newChar == '2') {
+							string completeFileName2 = pathStr2 + '\\' + (*it).fileName.string();
+#if 0
+							if ( remove( completeFileName2.c_str() ) != 0 )
+								cout << "Error deleting - " << completeFileName2;
+							else
+								cout << completeFileName2 << " - successfully deleted";
+#else								
+							cout << "Deleting..." << completeFileName2 << endl;
+#endif									
+							(*it).fileDeleted = true;
+						}
 					}
 					else {
 						cout << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
@@ -171,15 +275,14 @@ void compareFileEntries() {
 						cout << "      - " << pathStr2 << endl;
 						cout << endl;
 					}
-					// if !skip this file AND allow file delete
-					//    file 1 delete
-					//       del (*local_it).filename
-					//       temp_it = *local_it
-					//       FileStorage.erase(*temp_it)
-					//    file 2 delete
-					//       del (*it).filename
-					//       temp_it = *it
-					//       FileStorage.erase(*temp_it)
+
+					if (logFileCreate) {
+						logFileStream << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
+						logFileStream << "      - " << pathStr1 << endl;
+						logFileStream << "    " << protStr2 << " " << (*it).fileName.string() << endl;
+						logFileStream << "      - " << pathStr2 << endl;
+						logFileStream << endl;
+					}
 					fileNameMatchCount++;
 				}
 			}

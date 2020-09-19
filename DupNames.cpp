@@ -5,11 +5,13 @@
 //#include <iostream>
 #include <time.h>
 
+#include <stdio.h>
 #include <windows.h>
 
 #include "IniFile.h"
 #include "DupNames.h"
 #include "DupCompare.h"
+#include "ScrUtil.h"
 
 #pragma warning(disable : 26451)
 #pragma warning(disable : 4267)
@@ -30,6 +32,7 @@ int    lastPathTotal          = 0;
 
 // default Filename for the INI status file
 const string     default_INI_FileName    = "DupNames.ini";
+const string     default_LOG_FileName    = "DupNames.log";
 const string     SectionName_InitState   = "InitState";
 const string     SectionName_PathList    = "PathList";
 
@@ -46,41 +49,78 @@ string           workingPath;
 string           tokenMatchStr;
 
 string           INI_FileName = "";
+string           LOG_FileName = "";
 
 int main (int argc, char** argv)
 {
-	cout << "Command Line and " << argc - 1 << " arguments:" << endl;
-	cout << "   " << argv[0] << endl;
+    ScrUtil::setColors( ScrUtil::Yellow, ScrUtil::Blue );
+
+	cout << "\nCommand Line and " << argc - 1 << " arguments:";
+
+	cout << "\n   " << argv[0];
 	if (argc > 1) {
 		int i = 1;
 		while (argv[i] != NULL) {
-			cout << "   " << i << ", " << argv[i] << endl;
+			cout << "\n   " << i << ", " << argv[i];
 			if (argv[i][0] == '-' && argv[i][2] != ' ') {
 				argv[i][1] = tolower(argv[i][1]);
 				switch (argv[i][1]) {
+				case 'd':
+					allowFileDelete = true;
+					cout << "\nDelete file queries";
+					break;
 				case 'h':
 					commandLineError("Command Line Help -");
+    				ScrUtil::setColors( ScrUtil::White, ScrUtil::Black );
+					cout << endl;
 					return 2;
 				case 'i':
 					INI_FileName = (string)&argv[i][2];
-					cout << "INI file name set to " << INI_FileName << endl;
+					cout << "\nINI file name set to " << INI_FileName;
+					break;
+				case 'L':
+					logFileAppend = true;
+				case 'l':
+					logFileCreate = true;
+					if (&argv[i][2] != 0)
+						LOG_FileName = (string)&argv[i][2];
+					else {
+						fsPath tmpINI = argv[0];
+						LOG_FileName = tmpINI.parent_path().string() + "\\" + default_LOG_FileName;
+					}
+					cout << "\nLOG file name set to " << LOG_FileName;
+					if (!logFileAppend) {
+						remove( const_cast<char*>(LOG_FileName.c_str()) );
+					}
+					break;
+				case 's':
+					allowSkip2ProtFiles = true;
+					cout << "\nSkip query if both files are protected";
 					break;
 				case 'v':
 					verboseOutputFlag = true;
-					cout << "Verbose output enabled" << endl;
+					cout << "\nVerbose output enabled";
 					break;
 				default:
 					commandLineError("invalid command line argument - " + (string)argv[i]);
+    				ScrUtil::setColors( ScrUtil::White, ScrUtil::Black );
+					cout << endl;
 					return 1;
 				}
 			}
 			else {
 				commandLineError("no dash found in command line - " + (string)argv[i]);
+    			ScrUtil::setColors( ScrUtil::White, ScrUtil::Black );
+				cout << endl;
 				return 1;
 			}
 			i++;
 		}
 	}
+
+    ScrUtil::setColors( ScrUtil::White, ScrUtil::Black );
+	cout << endl;
+
 	if (INI_FileName == "") {
 		if (CIniFile::DoesFileExist(default_INI_FileName)) {
 			INI_FileName = default_INI_FileName;
@@ -91,6 +131,11 @@ int main (int argc, char** argv)
 			INI_FileName = tmpINI.parent_path().string() + "\\" + default_INI_FileName;
 			cout << INI_FileName << endl;
 		}
+	}
+
+	if (LOG_FileName != "") {
+		logFileStream.open(LOG_FileName, std::ios::out | std::ios::app); // append instead of overwrite
+		logFileStream << "Data";  // add arguments - time and date
 	}
 
 	cout << "Press Q to quit and H for help" << endl;
@@ -517,14 +562,27 @@ int main (int argc, char** argv)
 
 void commandLineError(string errorInfo)
 {
+    ScrUtil::Attributes atr = ScrUtil::getCurrentAttributes();
+    ScrUtil::setColors( ScrUtil::Cyan, ScrUtil::Black );
+	cout << endl;
+
 	cout << errorInfo << endl;
-	cout << "DupNames.exe -f<file name> -i<file name -h" << endl;
-	cout << "    -h help (this message) then exit" << endl
-		<< "    -i name of the INI file" << endl
-		<< "    -v verbose console output" << endl;
+	cout << "DupNames.exe [options]" << endl;
+	cout << "    -d  delete file queries" << endl
+		<< "    -h  help (this message) then exit" << endl
+		<< "    -i  INI file name \"-i<filename>\"" << endl
+		<< "           default (no -i) = DupNames.ini" << endl
+		<< "    -l  create a Log file\"-l<filename>\"" << endl
+		<< "           default (no -l) = no log file" << endl
+		<< "           default (-l)    = DupNames.log" << endl
+		<< "    -L  append to Log file (see -l above for more)" << endl
+		<< "    -s  skip query if both files are protected" << endl
+		<< "    -v  verbose console output" << endl;
 	cout << " Return Codes 0-Success" << endl
 		<< "              1-command line error" << endl
 		<< "              2-user request exit \"-h\" option OR \"q\" keystroke" << endl;
+
+    ScrUtil::setColors( atr.ink, atr.paper );
 }   // commandLineError
 
 void readDirBranch(const fsPath currentPath, size_t currentPathIndex, bool currentProtFlag)

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <conio.h>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 //#include <windows.h>
@@ -38,6 +39,7 @@ struct fileInfo_t {
 	size_t                 filePathIndex = 0;
 	vector <tokenInfo_t>   tokens;
 	int                    fileNameYear  = 0;
+	bool                   fileDeleted   = false;
 };
 
 struct pathInfo_t {
@@ -52,12 +54,17 @@ struct pathInfo_t {
 std::vector <struct fileInfo_t> FileStorage;
 std::vector <struct pathInfo_t> PathStorage;
 
+ofstream logFileStream;
+
 void commandLineError(string errorInfo);
 void compareFileEntries();
 void readDirBranch(const fsPath pathToShow, size_t currentPathIndex, bool currentProtFlag);
 void removeSpaces(string& str);
 
 bool allowFileDelete = false;
+bool allowSkip2ProtFiles = false;
+bool logFileAppend = false;
+bool logFileCreate = false;
 bool tokenPositiveFlag = false;
 bool allTokenMatchEnable = false;
 bool countedMatchEnable = false;
@@ -71,7 +78,12 @@ int  tokenPMatchValue = 0;
 extern std::vector <struct fileInfo_t> FileStorage;
 extern std::vector <struct pathInfo_t> PathStorage;
 
+extern ofstream logFileStream;
+
 extern bool allowFileDelete;
+extern bool allowSkip2ProtFiles;
+extern bool logFileAppend;
+extern bool logFileCreate;
 extern bool tokenPositiveFlag;
 extern bool allTokenMatchEnable;
 extern bool countedMatchEnable;
