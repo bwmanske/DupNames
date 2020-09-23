@@ -103,11 +103,18 @@ void moveCursorTo(Position pos)
     moveCursorTo( pos.row, pos.column );
 }
 
-void moveCursorTo(unsigned short int fila, unsigned short int columna)
+void moveCursorTo(unsigned short row, unsigned short column)
 {
     init();
 
-    printf( "%s%d;%dH", CSI, fila + 1, columna + 1 );
+    printf( "%s%d;%dH", CSI, row + 1, column + 1 );
+}
+
+void moveHorizontalAbsolute(unsigned short column) 
+{
+    init ();
+
+    printf( "%s%dG", CSI, column + 1 );
 }
 
 Position getConsoleSize()
