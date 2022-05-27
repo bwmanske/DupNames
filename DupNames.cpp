@@ -47,12 +47,14 @@ string           Key_MovieMatchEnable    = "MovieMatchEnable";
 string           Key_EpisodeMatchEnable  = "EpisodeMatchEnable";
 string           workingPath;
 string           tokenMatchStr;
+string           tmp_cout;
 
 string           INI_FileName = "";
 string           LOG_FileName = "";
 
 int main (int argc, char** argv)
 {
+	char tmpChar = 0;
     ScrUtil::setColors( ScrUtil::Yellow, ScrUtil::Blue );
 
 	cout << "\nCommand Line and " << argc - 1 << " arguments:";
@@ -82,11 +84,12 @@ int main (int argc, char** argv)
 					logFileAppend = true;
 				case 'l':
 					logFileCreate = true;
-					if (&argv[i][2] != 0)
+					tmpChar = argv[i][2];
+					if (tmpChar != (char)0)
 						LOG_FileName = (string)&argv[i][2];
 					else {
-						fsPath tmpINI = argv[0];
-						LOG_FileName = tmpINI.parent_path().string() + "\\" + default_LOG_FileName;
+						fsPath tmpLogPath = argv[0];
+						LOG_FileName = tmpLogPath.parent_path().string() + "\\" + default_LOG_FileName;
 					}
 					cout << "\nLOG file name set to " << LOG_FileName;
 					if (!logFileAppend) {
@@ -121,28 +124,36 @@ int main (int argc, char** argv)
     ScrUtil::setColors( ScrUtil::White, ScrUtil::Black );
 	cout << endl;
 
-	if (INI_FileName == "") {
-		if (CIniFile::DoesFileExist(default_INI_FileName)) {
-			INI_FileName = default_INI_FileName;
-		}
-		else {
-			fsPath tmpINI = argv[0];
-			cout << tmpINI.root_path().string() << endl << tmpINI.parent_path().string() << endl;
-			INI_FileName = tmpINI.parent_path().string() + "\\" + default_INI_FileName;
-			cout << INI_FileName << endl;
-		}
+	if (INI_FileName == (string)"") {
+		fsPath tmpINI = argv[0];
+		cout << tmpINI.root_path().string() << endl << tmpINI.parent_path().string() << endl;
+		INI_FileName = tmpINI.parent_path().string() + "\\" + default_INI_FileName;
+		cout << INI_FileName << endl;
 	}
 
 	if (LOG_FileName != "") {
 		logFileStream.open(LOG_FileName, std::ios::out | std::ios::app); // append instead of overwrite
-		logFileStream << "Data";  // add arguments - time and date
+		logFileStream << endl << "DupNames log file" << endl;
+		for (int i = 0; i < argc; i++) {
+			logFileStream << "   argv[" << i << "] = " << argv[i] << endl; // add arguments
+		}
+		// add time and date
+		logFileCreate = true;
+	}
+	else {
+		logFileCreate = false;
 	}
 
 	cout << "Press Q to quit and H for help" << endl;
 
 	if (CIniFile::DoesFileExist(INI_FileName)) {
-		std::cout << endl << INI_FileName << " - File exists" << endl << endl;      // time to read the file
+		textOutBuf << endl << INI_FileName << " - File exists" << endl << endl;      // time to read the file
+		textOut(textOutBuf);
 
+		// copy the .ini file contents to the log
+		string s = CIniFile::Content(INI_FileName);
+		if (logFileCreate) logFileStream << s + "\n";
+		
 		if (CIniFile::DoesSectionExist(SectionName_InitState, INI_FileName)) {
 			tokenMatchStr = CIniFile::GetValue(Key_TokenNMatchValue, SectionName_InitState, INI_FileName);
 			if (tokenMatchStr != "") {
@@ -150,15 +161,18 @@ int main (int argc, char** argv)
 					tokenNMatchValue = stoi(tokenMatchStr);
 				}
 				catch (invalid_argument const &e) {
-					cout << "Invalid Argument - tokenNMatchValue - " << e.what() << endl;
+					textOutBuf << "Invalid Argument - tokenNMatchValue - " << e.what() << endl;
+					textOut(textOutBuf);
 					tokenNMatchValue = DEFAULT_N_VAL;
 				}
 				catch (out_of_range const &e) {
-					cout << "Out Of Range - tokenNMatchValue - " << e.what() << endl;
+					textOutBuf << "Out Of Range - tokenNMatchValue - " << e.what() << endl;
+					textOut(textOutBuf);
 					tokenNMatchValue = DEFAULT_N_VAL;
 				}
 				if ((tokenNMatchValue < MIN_N_VAL) || (tokenNMatchValue > MAX_N_VAL)) {
-					cout << "TokenNMatchValue - Out of Range - setting it to default\n";
+					textOutBuf << "TokenNMatchValue - Out of Range - setting it to default " << (int)DEFAULT_N_VAL << "\n";
+					textOut(textOutBuf);
 					tokenNMatchValue = DEFAULT_N_VAL;
 				}
 			}
@@ -168,11 +182,13 @@ int main (int argc, char** argv)
 					tokenPMatchValue = stoi(tokenMatchStr);
 				}
 				catch (invalid_argument const &e) {
-					cout << "Invalid Argument - tokenPMatchValue - " << e.what() << endl;
+					textOutBuf << "Invalid Argument - tokenPMatchValue - " << e.what() << endl;
+					textOut(textOutBuf);
 					tokenPMatchValue = DEFAULT_P_VAL;
 				}
 				catch (out_of_range const &e) {
-					cout << "Out Of Range - tokenPMatchValue - " << e.what() << endl;
+					textOutBuf << "Out Of Range - tokenPMatchValue - " << e.what() << endl;
+					textOut(textOutBuf);
 					tokenPMatchValue = DEFAULT_P_VAL;
 				}
 				if ((tokenPMatchValue < MIN_P_VAL) || (tokenPMatchValue > MAX_P_VAL)) {
@@ -242,7 +258,8 @@ int main (int argc, char** argv)
 			}
 		}
 		else {
-			cout << SectionName_InitState << " - Section does NOT exist" << endl;
+			textOutBuf << SectionName_InitState << " - Section does NOT exist" << endl;
+			textOut(textOutBuf);
 			InitSuccess = false;
 		}
 
@@ -257,7 +274,8 @@ int main (int argc, char** argv)
 			workingPath = CIniFile::GetValue(INI_Path, SectionName_PathList, INI_FileName);
 			if (CIniFile::DoesPathExist(workingPath)) {
 				INI_PathProtectedCount++;
-				cout << INI_Path << " successful read - " << workingPath << endl;
+				textOutBuf << INI_Path << " successful read - " << workingPath << endl;
+				textOut(textOutBuf);
 			}
 			else {
 				INI_ProtectedComplete = true;
@@ -265,11 +283,13 @@ int main (int argc, char** argv)
 				workingPath = CIniFile::GetValue(INI_Path, SectionName_PathList, INI_FileName);
 				if (CIniFile::DoesPathExist(workingPath)) {
 					INI_PathNormalCount++;
-					cout << INI_Path << " successful read - " << workingPath << endl;
+					textOutBuf << INI_Path << " successful read - " << workingPath << endl;
+					textOut(textOutBuf);
 				}
 				else {
 					INI_NormalComplete = true;
-					cout << "Input Path Does Not Exist" << endl;
+					textOutBuf << "Input Path Does Not Exist" << endl;
+					textOut(textOutBuf);
 					InitSuccess = false;
 				}
 			}
@@ -286,12 +306,14 @@ int main (int argc, char** argv)
 			}
 		}
 		else {
-			cout << SectionName_PathList << " - Section does NOT exist" << endl;
+			textOutBuf << SectionName_PathList << " - Section does NOT exist" << endl;
+			textOut(textOutBuf);
 			InitSuccess = false;
 		}
 	}
 	else {
-		cout << INI_FileName << " - INI File does NOT exist" << endl;
+		textOutBuf << INI_FileName << " - INI File does NOT exist" << endl;
+		textOut(textOutBuf);
 		InitSuccess = false;
 	}
 
@@ -316,7 +338,8 @@ int main (int argc, char** argv)
 					auto newFileTotal = FileStorage.size();
 					auto newPathTotal = PathStorage.size();
 					if (newPathTotal - lastPathTotal != 0) {
-						cout << "    Paths read = " << (newPathTotal - lastPathTotal) << "   Files read = " << (newFileTotal - lastFileTotal) << endl;
+						textOutBuf << "    Paths read = " << (newPathTotal - lastPathTotal) << "   Files read = " << (newFileTotal - lastFileTotal) << endl;
+						textOut(textOutBuf);
 					}
 					lastPathTotal = newPathTotal;
 					lastFileTotal = newFileTotal;
@@ -326,7 +349,8 @@ int main (int argc, char** argv)
 						workingPath = CIniFile::GetValue(INI_Path, SectionName_PathList, INI_FileName);
 						if (CIniFile::DoesPathExist(workingPath)) {
 							INI_PathProtectedCount++;
-							cout << INI_Path << " successful read - " << workingPath << endl;
+							textOutBuf << INI_Path << " successful read - " << workingPath << endl;
+							textOut(textOutBuf);
 						}
 						else {
 							INI_ProtectedComplete = true;
@@ -338,7 +362,8 @@ int main (int argc, char** argv)
 							workingPath = CIniFile::GetValue(INI_Path, SectionName_PathList, INI_FileName);
 							if (CIniFile::DoesPathExist(workingPath)) {
 								INI_PathNormalCount++;
-								cout << INI_Path << " successful read - " << workingPath << endl;
+								textOutBuf << INI_Path << " successful read - " << workingPath << endl;
+								textOut(textOutBuf);
 							}
 							else {
 								INI_NormalComplete = true;
@@ -358,12 +383,14 @@ int main (int argc, char** argv)
 							PathStorage.push_back(tempPath);
 						}
 						else {
-							cout << "this shoulf never execute" << endl;
+							textOutBuf << "this shoulf never execute" << endl;
+							textOut(textOutBuf);
 						}
 					}
 					else {
 						if (INI_ProtectedComplete && INI_NormalComplete) {
-							cout << "Read Path Done - " << workingPath << endl;
+							textOutBuf << "Read Path Done - " << workingPath << endl;
+							textOut(textOutBuf);
 							readPathsDone = true;
 						}
 					}
@@ -396,11 +423,13 @@ int main (int argc, char** argv)
 						}
 					}
 					else {
-						cout << "Compare not started - No Match Types Enabled" << endl;
+						textOutBuf << "Compare not started - No Match Types Enabled" << endl;
+						textOut(textOutBuf);
 					}
 				}
 				else {
-					cout << "Compare not started - Read paths incomplete" << endl;
+					textOutBuf << "Compare not started - Read paths incomplete" << endl;
+					textOut(textOutBuf);
 				}
 				break;
 			case 'C':
@@ -413,11 +442,13 @@ int main (int argc, char** argv)
 						}
 					}
 					else {
-						cout << "Compare not started - No Match Types Enabled" << endl;
+						textOutBuf << "Compare not started - No Match Types Enabled" << endl;
+						textOut(textOutBuf);
 					}
 				}
 				else {
-					cout << "Compare not started - Read paths incomplete" << endl;
+					textOutBuf << "Compare not started - Read paths incomplete" << endl;
+					textOut(textOutBuf);
 				}
 				break;
 			case 'm':
@@ -425,7 +456,8 @@ int main (int argc, char** argv)
 				while (_kbhit() != 0) {       // clear the keyboard queue
 					char newChar = _getch();
 				}
-				cout << "1-Movies Match  2=Episodes Match  3=Trimmed Name Match  4=All Token Match  5=Counted Match  >" ;
+				textOutBuf << "1-Movies Match  2=Episodes Match  3=Trimmed Name Match  4=All Token Match  5=Counted Match  >" ;
+				textOut(textOutBuf);
 				newChar = _getch();
 				cout << endl;
 				switch (newChar) {
@@ -451,16 +483,18 @@ int main (int argc, char** argv)
 					char newChar = _getch();
 				}
 
-				cout << "Movie Match        = " << (movieMatchEnable           ? "Enabled" : "Disabled") << endl;
-				cout << "Episode Match      = " << (episodeMatchEnable         ? "Enabled" : "Disabled") << endl;
-				cout << "Trimmed Name Match = " << (trimmedFileNameMatchEnable ? "Enabled" : "Disabled") << endl;
-				cout << "All Token Match    = " << (allTokenMatchEnable        ? "Enabled" : "Disabled") << endl;
-				cout << "Counted Match      = " << (countedMatchEnable         ? "Enabled" : "Disabled") << endl;
+				textOutBuf << "Movie Match        = " << (movieMatchEnable           ? "Enabled" : "Disabled") << endl;
+				textOutBuf << "Episode Match      = " << (episodeMatchEnable         ? "Enabled" : "Disabled") << endl;
+				textOutBuf << "Trimmed Name Match = " << (trimmedFileNameMatchEnable ? "Enabled" : "Disabled") << endl;
+				textOutBuf << "All Token Match    = " << (allTokenMatchEnable        ? "Enabled" : "Disabled") << endl;
+				textOutBuf << "Counted Match      = " << (countedMatchEnable         ? "Enabled" : "Disabled") << endl;
+				textOut(textOutBuf);
 
 				break;
 			case 'h':
 			case 'H':
-				cout << endl
+				textOutBuf
+					<< endl
 					<< "Key Help" << endl
 					<< " h, H - Show KEY help" << endl
 					<< " q, Q - Exit this program" << endl
@@ -477,27 +511,32 @@ int main (int argc, char** argv)
 					<< " s, S - Status" << endl
 					<< " -, + - change (+) match value (" << MIN_P_VAL << " to " << MAX_P_VAL << ")" << endl
 					<< " <, > - change (-) match value (" << MIN_N_VAL << " to " << MAX_N_VAL << ")" << endl;
+				textOut(textOutBuf);
 				break;
 			case 'p':
 			case 'P':
 				for (auto it = PathStorage.begin(); it != PathStorage.end(); ++it) {
-					cout << "Path = " << (*it).pathName.string() << "   " << (*it).pathNameIndex << ((*it).protectedFlag? "  Protected": "  Normal") << endl;
+					textOutBuf << "Path = " << (*it).pathName.string() << "   " << (*it).pathNameIndex << ((*it).protectedFlag? "  Protected": "  Normal") << endl;
+					textOut(textOutBuf);
 				};
 				break;
 			case 'f':
 			case 'F':
 				for (auto it = FileStorage.begin(); it != FileStorage.end(); ++it) {
 					if (newChar == 'F') {
-						cout << "Filename = " << (*it).fileName.string() << "   " << (*it).filePathIndex << endl;
+						textOutBuf << "Filename = " << (*it).fileName.string() << "   " << (*it).filePathIndex << endl;
+						textOut(textOutBuf);
 					}
 					else {
-						cout << "Filename = " << (*it).trimmedFileName << "   " << (*it).filePathIndex << endl;
+						textOutBuf << "Filename = " << (*it).trimmedFileName << "   " << (*it).filePathIndex << endl;
+						textOut(textOutBuf);
 					}
 				};
 				break;
 			case 's':
 			case 'S':
-				cout << "Protected Paths                = " << INI_PathProtectedCount << endl
+				textOutBuf
+					<< "Protected Paths                = " << INI_PathProtectedCount << endl
 					<< "Normal Paths                   = " << INI_PathNormalCount << endl
 					<< "Paths Read                     = " << PathStorage.size() << endl
 					<< "Files Read                     = " << FileStorage.size() << endl
@@ -507,6 +546,7 @@ int main (int argc, char** argv)
 					<< "All Token Match                = " << (allTokenMatchEnable        ? "Enabled" : "Disabled") << endl
 					<< "Counted Match                  = " << (countedMatchEnable         ? "Enabled" : "Disabled") << endl
 					<< "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOut(textOutBuf);
 				break;
 			case '+':
 				if (tokenPMatchValue < MIN_P_VAL || tokenPMatchValue > MAX_P_VAL) { 
@@ -516,7 +556,8 @@ int main (int argc, char** argv)
 				if (tokenPMatchValue < MAX_P_VAL) {
 					tokenPMatchValue++;
 				}
-				cout << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOutBuf << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOut(textOutBuf);
 				break;
 			case '-':
 				if (tokenPMatchValue < MIN_P_VAL || tokenPMatchValue > MAX_P_VAL) {
@@ -526,7 +567,8 @@ int main (int argc, char** argv)
 				if (tokenPMatchValue > MIN_P_VAL) {
 					tokenPMatchValue--;
 				}
-				cout << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOutBuf << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOut(textOutBuf);
 				break;
 			case '>':
 				if (tokenNMatchValue < MIN_N_VAL || tokenNMatchValue > MAX_N_VAL) {
@@ -536,7 +578,8 @@ int main (int argc, char** argv)
 				if (tokenNMatchValue < MAX_N_VAL) {
 					tokenNMatchValue++;
 				}
-				cout << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOutBuf << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOut(textOutBuf);
 				break;
 			case '<':
 				if (tokenNMatchValue < MIN_N_VAL || tokenNMatchValue > MAX_P_VAL) {
@@ -546,7 +589,8 @@ int main (int argc, char** argv)
 				if (tokenNMatchValue > MIN_N_VAL) {
 					tokenNMatchValue--;
 				}
-				cout << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOutBuf << "Word Matching is set to (+) " << tokenPMatchValue << "   (-) " << tokenNMatchValue << endl;
+				textOut(textOutBuf);
 				break;
 			default:
 				break;
@@ -557,6 +601,7 @@ int main (int argc, char** argv)
 		}
 	}
 
+	if (logFileCreate) logFileStream.close();
 	return 0;
 }   // main
 
@@ -622,7 +667,8 @@ void readDirBranch(const fsPath currentPath, size_t currentPathIndex, bool curre
 				tempPath.pathName = currentPath.string() + "\\" + filename.string();
 
 				if (verboseOutputFlag) {
-					cout << "Path = " << tempPath.pathName << "   " << tempPath.pathNameIndex << endl;
+					textOutBuf << "Path = " << tempPath.pathName << "   " << tempPath.pathNameIndex << endl;
+					textOut(textOutBuf);
 				}
 
 				PathStorage.push_back(tempPath);
@@ -701,7 +747,8 @@ void readDirBranch(const fsPath currentPath, size_t currentPathIndex, bool curre
 				// save file info
 				tempFile.fileName = filename;
 				if (verboseOutputFlag) {
-					cout << "Filename = " << filename << endl;
+					textOutBuf << "Filename = " << filename << endl;
+					textOut(textOutBuf);
 				}
 
 				if (movieMatchEnable || episodeMatchEnable) {
@@ -718,6 +765,17 @@ void readDirBranch(const fsPath currentPath, size_t currentPathIndex, bool curre
 		}
 	}
 }   // readDirBranch
+
+void textOut(ostringstream& buf)
+{
+	cout << buf.str();
+	if (logFileCreate) {
+		logFileStream << buf.str();
+	}
+	buf.str("");    // buffer reset - to avoid the constructor and destructor overhead
+	buf.seekp(0);
+	buf.clear();
+}
 
 // Function to in-place trim all spaces in the string such that all words
 // should contain only a single space between them. 

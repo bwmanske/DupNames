@@ -9,7 +9,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-//#include <windows.h>
+#include <sstream>
 
 
 #define MAX_TOKENS      6
@@ -51,16 +51,25 @@ struct pathInfo_t {
 };
 
 #ifdef DUP_NAMES_CPP
-std::vector <struct fileInfo_t> FileStorage;
-std::vector <struct pathInfo_t> PathStorage;
+#define EXTERN          // conditional extern for the file named DupNames.cpp
+#else
+#define EXTERN extern
+#endif
 
-ofstream logFileStream;
+EXTERN void commandLineError(string errorInfo);
+EXTERN void compareFileEntries();
+EXTERN void readDirBranch(const fsPath pathToShow, size_t currentPathIndex, bool currentProtFlag);
+EXTERN void removeSpaces(string& str);
+EXTERN void textOut(ostringstream& buf);
 
-void commandLineError(string errorInfo);
-void compareFileEntries();
-void readDirBranch(const fsPath pathToShow, size_t currentPathIndex, bool currentProtFlag);
-void removeSpaces(string& str);
+EXTERN std::vector <struct fileInfo_t> FileStorage;
+EXTERN std::vector <struct pathInfo_t> PathStorage;
 
+EXTERN ofstream logFileStream;
+EXTERN ostringstream textOutBuf;
+
+// global data with initializations
+#ifdef DUP_NAMES_CPP
 bool allowFileDelete = false;
 bool allowSkip2ProtFiles = false;
 bool logFileAppend = false;
@@ -75,11 +84,6 @@ bool movieMatchEnable = false;
 int  tokenNMatchValue = 1;
 int  tokenPMatchValue = 0;
 #else
-extern std::vector <struct fileInfo_t> FileStorage;
-extern std::vector <struct pathInfo_t> PathStorage;
-
-extern ofstream logFileStream;
-
 extern bool allowFileDelete;
 extern bool allowSkip2ProtFiles;
 extern bool logFileAppend;
@@ -94,5 +98,3 @@ extern bool movieMatchEnable;
 extern int  tokenNMatchValue;
 extern int  tokenPMatchValue;
 #endif
-
-// TODO: Reference additional headers your program requires here.

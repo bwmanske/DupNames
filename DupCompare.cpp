@@ -32,7 +32,7 @@ void initCompare() {
 	trialCount = 0;
 	compareFilesDone = false;
 	skipAll = false;
-}
+}   // initCompare
 
 void compareFileEntries() {
 	bool trimmedMatch   = false;
@@ -197,54 +197,43 @@ void compareFileEntries() {
 						// skip comparison if both files are protected
 						if ((protStr1 == "P") && (protStr2 == "P")) {
 							if (logFileCreate) {     // print file size and date
-								cout << possibleMatchStr(trimmedMatch, allTokenMatch, countedMatch);
+								logFileStream << "Both Files Protected - Not Displayed" << endl;
+								logFileStream << possibleMatchStr(trimmedMatch, allTokenMatch, countedMatch);
 								logCompareMatch(local_it, it);
 							}
 							continue;
 						}
 					}
 
-					cout << possibleMatchStr(trimmedMatch, allTokenMatch, countedMatch);
-#if 0					
-					cout << "Possible Match ";
-					if (trimmedMatch) {
-						cout << "(Trimmed Match) ";
-					}
-					if (allTokenMatch) {
-						cout << "(All Token Match) ";
-					}
-					if (countedMatch) {
-						cout << "(Counted Match " << (tokenPositiveFlag?"+":"-") << ") Needed=" << matchesNeeded << " Counted=" << matchFlagCount << "-";
-						auto p2 = (*it).tokens.begin();
-						for (; p2 != (*it).tokens.end(); ++p2) {
-							if ((*p2).matchFlag == true) {
-								cout << "\"" << (*p2).tokenValue << "\" ";
-							}
-						}
-					}
-					cout << endl;
-#endif
+					textOutBuf << possibleMatchStr(trimmedMatch, allTokenMatch, countedMatch);
+					textOut(textOutBuf);
+
 					if (allowFileDelete) {     // print file size and date
 						ScrUtil::Attributes atr = ScrUtil::getCurrentAttributes();
 
 						ScrUtil::Color colour = ( protStr1 == "N" ) ? ScrUtil::Green : ScrUtil::Red;
 					    ScrUtil::setColors( colour, ScrUtil::Black );
 						string numStr = (colour == ScrUtil::Green) ? "(1) " : "    ";
-						cout << numStr << (*local_it).fileName.string() << endl;
-						cout << "      - " << pathStr1 << endl;
+						textOutBuf << numStr << (*local_it).fileName.string() << endl;
+						textOutBuf << "      - " << pathStr1 << endl;
+						textOut(textOutBuf);
 
 						colour = ( protStr2 == "N" ) ? ScrUtil::Green : ScrUtil::Red;
 					    ScrUtil::setColors( colour, ScrUtil::Black );
 						numStr = (colour == ScrUtil::Green) ? "(2) " : "    ";
-						cout << numStr << (*it).fileName.string() << endl;
-						cout << "      - " << pathStr2 << endl;
+						textOutBuf << numStr << (*it).fileName.string() << endl;
+						textOutBuf << "      - " << pathStr2 << endl;
+						textOut(textOutBuf);
 
 					    ScrUtil::setColors( atr.ink, atr.paper );
 						cout << "Delete file (1) (2) (S) to skip all ";
-						if (logFileCreate)
+						if (logFileCreate) {
 							cout << "(space) to skip or (L) to log\n";
-						else
+						}
+						else {
 							cout << "or (space) to skip\n";
+						}
+						textOut(textOutBuf);
 						
 						char newChar;
 						while (_kbhit() != 0) {             // clear the input buffer
@@ -271,16 +260,18 @@ void compareFileEntries() {
 									}
 									break;
 								case ' ':
+									if (logFileCreate) logFileStream << "---> No Selection" << endl << endl;
 									waitForIt = false;
 									break;
 								case 'l':
-								case 'L':
+								case 'L':              // no action here yet
 									waitForIt = false;
 									break;
 								case 's':
 								case 'S':
 									skipAll = true;
-									cout << "Skip All\n";
+									textOutBuf << "Skip All\n";
+									textOut(textOutBuf);
 									waitForIt = false;
 									break;
 								default:
@@ -294,49 +285,47 @@ void compareFileEntries() {
 							}
 						}
 						if (newChar == '1') {
+							textOutBuf << "---> [1] ";
 							string completeFileName1 = pathStr1 + '\\' + (*local_it).fileName.string();
 #if 0								
-							if ( remove( completeFileName1.c_str() ) != 0 )
-								cout << "Error deleting - " << completeFileName1;
-							else
-								cout << completeFileName1 << " - successfully deleted";
+							if ( remove( completeFileName1.c_str() ) != 0 ) {
+								textOutBuf << "Error deleting - " << completeFileName1;
+							}
+							else {
+								textOutBuf << completeFileName1 << " - successfully deleted";
+							}
 #else								
-							cout << "(NOT) Deleting..." << completeFileName1 << endl;
+							textOutBuf << "(NOT) Deleting..." << completeFileName1 << endl;
 #endif									
+							textOut(textOutBuf);
 							(*local_it).fileDeleted = true;
 						}
 						if (newChar == '2') {
+							textOutBuf << "---> [2] ";
 							string completeFileName2 = pathStr2 + '\\' + (*it).fileName.string();
 #if 0
-							if ( remove( completeFileName2.c_str() ) != 0 )
-								cout << "Error deleting - " << completeFileName2;
-							else
-								cout << completeFileName2 << " - successfully deleted";
+							if ( remove( completeFileName2.c_str() ) != 0 ) {
+								textOutBuf << "Error deleting - " << completeFileName2;
+							}
+							else {
+								textOutBuf << completeFileName2 << " - successfully deleted";
+							}
 #else								
-							cout << "(NOT) Deleting..." << completeFileName2 << endl;
+							textOutBuf << "(NOT) Deleting..." << completeFileName2 << endl;
 #endif									
+							textOut(textOutBuf);
 							(*it).fileDeleted = true;
 						}
 					}
 					else {     // print file size and date
-						cout << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
-						cout << "      - " << pathStr1 << endl;
-						cout << "    " << protStr2 << " " << (*it).fileName.string() << endl;
-						cout << "      - " << pathStr2 << endl;
-						cout << endl;
+						textOutBuf << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
+						textOutBuf << "      - " << pathStr1 << endl;
+						textOutBuf << "    " << protStr2 << " " << (*it).fileName.string() << endl;
+						textOutBuf << "      - " << pathStr2 << endl;
+						textOutBuf << endl;
+						textOut(textOutBuf);
 					}
 
-					if (logFileCreate) {     // print file size and date
-						logFileStream << possibleMatchStr(trimmedMatch, allTokenMatch, countedMatch);
-						logCompareMatch(local_it, it);
-#if 0						
-						logFileStream << "    " << protStr1 << " " << (*local_it).fileName.string() << endl;
-						logFileStream << "      - " << pathStr1 << endl;
-						logFileStream << "    " << protStr2 << " " << (*it).fileName.string() << endl;
-						logFileStream << "      - " << pathStr2 << endl;
-						logFileStream << endl;
-#endif						
-					}
 					savedTime = clock();
 					fileNameMatchCount++;
 				}
@@ -344,8 +333,9 @@ void compareFileEntries() {
 			it++;
 		}
 		else {
-			cout << "Compare Done - Match count " << fileNameMatchCount << endl;
-			cout << "               Trial Count " << trialCount << endl;
+			textOutBuf << "Compare Done - Match count " << fileNameMatchCount << endl;
+			textOutBuf << "               Trial Count " << trialCount << endl;
+			textOut(textOutBuf);
 			compareFilesDone = true;
 			CompareEnableFlag = false;
 		}
@@ -398,12 +388,13 @@ void logCompareMatch (std::vector<fileInfo_t>::iterator it1, std::vector<fileInf
 	string protStr2 = fileProtectStr(filePath2);
 	string pathStr1 = filePathStr(filePath1);
 	string pathStr2 = filePathStr(filePath2);
-
-	logFileStream << "    " << protStr1 << " " << (*it1).fileName.string() << endl;
-	logFileStream << "      - " << pathStr1 << endl;
-	logFileStream << "    " << protStr2 << " " << (*it2).fileName.string() << endl;
-	logFileStream << "      - " << pathStr2 << endl;
-	logFileStream << endl;
+	if (logFileCreate) {
+		logFileStream << "    " << protStr1 << " " << (*it1).fileName.string() << endl;
+		logFileStream << "      - " << pathStr1 << endl;
+		logFileStream << "    " << protStr2 << " " << (*it2).fileName.string() << endl;
+		logFileStream << "      - " << pathStr2 << endl;
+		logFileStream << endl;
+	}
 }   // logCompareMatch
 
 string possibleMatchStr(bool trimmedMatch, bool allTokenMatch, bool countedMatch) {
